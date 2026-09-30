@@ -1,11 +1,9 @@
-// require ('dotenv').config({path: './env'})
 import dotenv from 'dotenv'
 import connectDB from './db/index.js'
 import { app } from './app.js'
-dotenv.config({
-    path:'./.env'
-})
 
+// Simple default setup because nodemon CLI handles the inject path!
+dotenv.config();
 
 connectDB()
 .then(()=>{
@@ -16,7 +14,5 @@ connectDB()
 .catch((error)=>{
     console.log("MONGODB Connection failed !!!" , error)
 })
-
-
 
 
