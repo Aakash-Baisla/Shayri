@@ -37,22 +37,56 @@ const userSchema = new Schema(
         ],
         refreshToken: {
             type: String
-        }
+        },
+        role: {
+            type: String,
+            enum: ["user", "admin"],
+            default: "user",
+        },
     },
     { timestamps: true }
 );
 
-// Hitesh's standard password hashing hooks
-userSchema.pre("save", async function (next) {
-    if(!this.isModified("password")) return next();
+
+// Cleaned up for modern Mongoose: removed next entirely
+userSchema.pre("save", async function () {
+    if (!this.isModified("password")) return;
+    
     this.password = await bcrypt.hash(this.password, 10);
-    next();
 });
+
 
 userSchema.methods.isPasswordCorrect = async function(password){
     return await bcrypt.compare(password, this.password);
 };
 
 // JWT Generation Methods (generateAccessToken / generateRefreshToken) go here...
+// Add these right below your isPasswordCorrect method
+userSchema.methods.generateAccessToken = function(){
+    return jwt.sign(
+        {
+            _id: this._id,
+            email: this.email,
+            username: this.username,
+            fullName: this.fullName
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        {
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+        }
+    )
+}
+
+userSchema.methods.generateRefreshToken = function(){
+    return jwt.sign(
+        {
+            _id: this._id,
+        },
+        process.env.REFRESH_TOKEN_SECRET,
+        {
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+        }
+    )
+}
 
 export const User = mongoose.model("User", userSchema);
